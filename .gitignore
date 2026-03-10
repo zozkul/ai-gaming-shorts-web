@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.env
+.env.*
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+
+# Videos & large files
+games/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.m4v
+*.mp3
+*.m4a
+*.wav
+
+# Temp
+/tmp/
+temp/
+output/
+input/
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.vscode/
+.idea/
