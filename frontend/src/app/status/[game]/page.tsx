@@ -25,6 +25,8 @@ interface StatusData {
   stages?: PipelineStage[];
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 const STAGE_ORDER = ["extracting", "prompts", "combining", "done"];
 
 const STAGE_LABELS: Record<string, string> = {
@@ -48,7 +50,7 @@ export default function StatusPage() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/process/status/${game}`);
+      const res = await fetch(`${API_BASE}/api/process/status/${game}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: StatusData = await res.json();
       setStatus(data);

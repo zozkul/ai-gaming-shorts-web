@@ -28,6 +28,7 @@ const VOICES = [
 ];
 
 const GAME_NAME = "default";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 const STEPS = ["Upload", "Clips & Platforms", "Presenter", "Voice", "Review"];
 
@@ -104,7 +105,7 @@ export default function UploadPage() {
         setUploadProgress((p) => (p >= 90 ? 90 : p + 10));
       }, 500);
 
-      const res = await fetch(`http://localhost:8000/api/upload/${GAME_NAME}`, {
+      const res = await fetch(`${API_BASE}/api/upload/${GAME_NAME}`, {
         method: "POST",
         body: formData,
       });
@@ -149,7 +150,7 @@ export default function UploadPage() {
     };
 
     try {
-      const res = await fetch(`http://localhost:8000/api/process/start/${GAME_NAME}`, {
+      const res = await fetch(`${API_BASE}/api/process/start/${GAME_NAME}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
