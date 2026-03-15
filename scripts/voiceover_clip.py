@@ -144,7 +144,7 @@ def create_voiceover_video(gameplay_clip, tts_audio, words, clip_title, output_p
         "ffmpeg", "-y",
         "-i", gameplay_clip,
         "-i", tts_audio,
-        "-filter_complex_script", fc_file,
+        "-/filter_complex", fc_file,
         "-map", "[vout]", "-map", "[aout]",
         "-c:v", "libx264", "-preset", "ultrafast", "-crf", "26",
         "-pix_fmt", "yuv420p",
