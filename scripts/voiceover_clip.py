@@ -53,8 +53,13 @@ def get_word_timestamps(audio_path, language=None):
         t = client.audio.transcriptions.create(**kwargs)
     return t.words or []
 
-IMPACT_FONT = "/System/Library/Fonts/Supplemental/Impact.ttf"
-UNICODE_FONT = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
+import platform as _platform
+if _platform.system() == "Windows":
+    IMPACT_FONT = "C:/Windows/Fonts/impact.ttf"
+    UNICODE_FONT = "C:/Windows/Fonts/arial.ttf"
+else:
+    IMPACT_FONT = "/System/Library/Fonts/Supplemental/Impact.ttf"
+    UNICODE_FONT = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 
 def _ffmpeg_safe(text):
     """Escape characters unsafe for FFmpeg drawtext while preserving Unicode (Turkish etc.)"""
@@ -131,13 +136,17 @@ def create_voiceover_video(gameplay_clip, tts_audio, words, clip_title, output_p
         f"[1:a]volume=2.5,adelay={int(audio_start*1000)}|{int(audio_start*1000)}[tts_a];"
         f"[game_a][tts_a]amix=inputs=2:duration=longest:normalize=0[aout]"
     )
+    # Write filter_complex to a temp file to avoid Windows command line length limit
+    fc_file = os.path.join(tempfile.gettempdir(), "fc_filter.txt")
+    with open(fc_file, "w", encoding="utf-8") as f:
+        f.write(filter_complex)
     cmd = [
         "ffmpeg", "-y",
         "-i", gameplay_clip,
         "-i", tts_audio,
-        "-filter_complex", filter_complex,
+        "-filter_complex_script", fc_file,
         "-map", "[vout]", "-map", "[aout]",
-        "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "26",
         "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "192k",
         "-movflags", "+faststart",
