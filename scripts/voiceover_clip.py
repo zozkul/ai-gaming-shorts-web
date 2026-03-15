@@ -55,8 +55,9 @@ def get_word_timestamps(audio_path, language=None):
 
 import platform as _platform
 if _platform.system() == "Windows":
-    IMPACT_FONT = "font=Impact"
-    UNICODE_FONT = "font=Arial"
+    # \: escapes the colon in FFmpeg filtergraph option syntax
+    IMPACT_FONT = "fontfile=C\\:/Windows/Fonts/Impact.ttf"
+    UNICODE_FONT = "fontfile=C\\:/Windows/Fonts/Arial.ttf"
 else:
     IMPACT_FONT = "fontfile=/System/Library/Fonts/Supplemental/Impact.ttf"
     UNICODE_FONT = "fontfile=/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
@@ -153,13 +154,13 @@ def create_voiceover_video(gameplay_clip, tts_audio, words, clip_title, output_p
         "-t", str(total_dur),
         output_path
     ]
-    env = os.environ.copy()
-    if _platform.system() == "Windows":
-        fc_conf = os.path.join(tempfile.gettempdir(), "ai_fonts.conf")
-        with open(fc_conf, "w", encoding="utf-8") as fcf:
-            fcf.write('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n<fontconfig>\n  <dir>C:/Windows/Fonts</dir>\n</fontconfig>\n')
-        env["FONTCONFIG_FILE"] = fc_conf
-    subprocess.run(cmd, check=True, capture_output=False, env=env)
+    result = subprocess.run(cmd, capture_output=True)
+    stderr_text = result.stderr.decode('utf-8', errors='replace') if result.stderr else ""
+    # Always print last lines so errors are visible in uvicorn logs
+    for line in stderr_text.splitlines()[-8:]:
+        print(f"   [ffmpeg] {line}")
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, cmd, stderr=result.stderr)
 
 def process_voiceover(game_name, text_input=None, voice="y8mBjGEqtMV3PO41kDm0", platforms=None, voice_settings=None):
     clips_dir  = f"games/{game_name}/clips"
