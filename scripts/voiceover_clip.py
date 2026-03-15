@@ -55,9 +55,9 @@ def get_word_timestamps(audio_path, language=None):
 
 import platform as _platform
 if _platform.system() == "Windows":
-    # \: escapes the colon in FFmpeg filtergraph option syntax
-    IMPACT_FONT = "fontfile=C\\:/Windows/Fonts/Impact.ttf"
-    UNICODE_FONT = "fontfile=C\\:/Windows/Fonts/Arial.ttf"
+    # Single quotes prevent : from being parsed as option separator
+    IMPACT_FONT = "fontfile='C:/Windows/Fonts/Impact.ttf'"
+    UNICODE_FONT = "fontfile='C:/Windows/Fonts/Arial.ttf'"
 else:
     IMPACT_FONT = "fontfile=/System/Library/Fonts/Supplemental/Impact.ttf"
     UNICODE_FONT = "fontfile=/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
