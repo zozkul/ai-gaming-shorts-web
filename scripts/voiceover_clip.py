@@ -153,7 +153,13 @@ def create_voiceover_video(gameplay_clip, tts_audio, words, clip_title, output_p
         "-t", str(total_dur),
         output_path
     ]
-    subprocess.run(cmd, check=True, capture_output=False)
+    env = os.environ.copy()
+    if _platform.system() == "Windows":
+        fc_conf = os.path.join(tempfile.gettempdir(), "ai_fonts.conf")
+        with open(fc_conf, "w", encoding="utf-8") as fcf:
+            fcf.write('<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n<fontconfig>\n  <dir>C:/Windows/Fonts</dir>\n</fontconfig>\n')
+        env["FONTCONFIG_FILE"] = fc_conf
+    subprocess.run(cmd, check=True, capture_output=False, env=env)
 
 def process_voiceover(game_name, text_input=None, voice="y8mBjGEqtMV3PO41kDm0", platforms=None, voice_settings=None):
     clips_dir  = f"games/{game_name}/clips"
