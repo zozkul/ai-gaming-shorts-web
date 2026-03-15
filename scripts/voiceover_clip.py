@@ -55,11 +55,11 @@ def get_word_timestamps(audio_path, language=None):
 
 import platform as _platform
 if _platform.system() == "Windows":
-    IMPACT_FONT = "C:/Windows/Fonts/impact.ttf"
-    UNICODE_FONT = "C:/Windows/Fonts/arial.ttf"
+    IMPACT_FONT = "font=Impact"
+    UNICODE_FONT = "font=Arial"
 else:
-    IMPACT_FONT = "/System/Library/Fonts/Supplemental/Impact.ttf"
-    UNICODE_FONT = "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
+    IMPACT_FONT = "fontfile=/System/Library/Fonts/Supplemental/Impact.ttf"
+    UNICODE_FONT = "fontfile=/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
 
 def _ffmpeg_safe(text):
     """Escape characters unsafe for FFmpeg drawtext while preserving Unicode (Turkish etc.)"""
@@ -80,7 +80,7 @@ def build_subtitle_filter(words, clip_title, audio_start=0.5):
     title_font = _pick_font(safe_title)
     if safe_title:
         filters.append(
-            f"drawtext=fontfile='{title_font}':"
+            f"drawtext={title_font}:"
             f"text='{safe_title}':fontsize=70:fontcolor=yellow:bordercolor=black:borderw=8:"
             f"x=(w-text_w)/2:y=h-200:enable='between(t,0,{audio_start})'"
         )
@@ -96,13 +96,13 @@ def build_subtitle_filter(words, clip_title, audio_start=0.5):
         shake = 5 if dur < 0.4 else 2
         word_font = _pick_font(word)
         filters.append(
-            f"drawtext=fontfile='{word_font}':"
+            f"drawtext={word_font}:"
             f"text='{word}':fontsize=100:fontcolor={shadow}:"
             f"x='(w-text_w)/2+sin((t-{start})*20)*{shake}+4':y='h-200+4':"
             f"enable='between(t,{start},{end})':alpha='0.8'"
         )
         filters.append(
-            f"drawtext=fontfile='{word_font}':"
+            f"drawtext={word_font}:"
             f"text='{word}':fontsize=100:fontcolor={color}:bordercolor=black:borderw=10:"
             f"x='(w-text_w)/2+sin((t-{start})*20)*{shake}':y='h-200':"
             f"enable='between(t,{start},{end})'"
