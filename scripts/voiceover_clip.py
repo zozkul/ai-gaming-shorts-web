@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, json, subprocess, re
+import os, sys, json, subprocess, re, tempfile
 from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -201,7 +201,7 @@ def process_voiceover(game_name, text_input=None, voice="y8mBjGEqtMV3PO41kDm0", 
             commentary = auto_generate_commentary(clip, game_name)
         print(f"   Yorum: {commentary[:80]}")
 
-        tts_path = f"/tmp/tts_{game_name}_{clip_num}.mp3"
+        tts_path = os.path.join(tempfile.gettempdir(), f"tts_{game_name}_{clip_num}.mp3")
         text_to_speech(commentary, tts_path, voice=voice, voice_settings=voice_settings)
 
         print(f"   Whisper ile timestamp aliniyor...")

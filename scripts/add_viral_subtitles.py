@@ -12,6 +12,7 @@ import sys
 import json
 import subprocess
 import random
+import tempfile
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -53,7 +54,7 @@ def transcribe_influencer_audio(video_path, influencer_start, influencer_end):
     """Transcribe influencer audio segment using Whisper"""
 
     # Extract influencer audio segment
-    temp_audio = "/tmp/influencer_audio.wav"
+    temp_audio = os.path.join(tempfile.gettempdir(), "influencer_audio.wav")
 
     cmd = [
         'ffmpeg', '-y',
