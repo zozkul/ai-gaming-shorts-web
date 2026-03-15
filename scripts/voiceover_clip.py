@@ -120,9 +120,6 @@ def create_voiceover_video(gameplay_clip, tts_audio, words, clip_title, output_p
     subtitle_filter = build_subtitle_filter(words, clip_title, audio_start)
     overlay_end = f",{subtitle_filter}[vout]" if subtitle_filter else ",setsar=1[vout]"
 
-    # Clamp total_dur to gameplay clip length
-    total_dur = min(total_dur, game_dur)
-
     filter_complex = (
         # Explicit split to avoid ffmpeg auto-split issues (prevents choppy output)
         f"[0:v]trim=duration={total_dur},setpts=PTS-STARTPTS,split=2[v1][v2];"
@@ -143,6 +140,7 @@ def create_voiceover_video(gameplay_clip, tts_audio, words, clip_title, output_p
         f.write(filter_complex)
     cmd = [
         "ffmpeg", "-y",
+        "-stream_loop", "-1",
         "-i", gameplay_clip,
         "-i", tts_audio,
         "-/filter_complex", fc_file,
