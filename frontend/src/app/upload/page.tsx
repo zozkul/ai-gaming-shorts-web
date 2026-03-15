@@ -113,7 +113,7 @@ export default function UploadPage() {
 
         const res = await fetch(
           `${API_BASE}/api/upload-chunk/${GAME_NAME}?chunk_index=${i}&total_chunks=${totalChunks}&filename=${encodeURIComponent(file.name)}`,
-          { method: "POST", body: formData }
+          { method: "POST", body: formData, headers: { "ngrok-skip-browser-warning": "1" } }
         );
 
         if (!res.ok) {
@@ -159,7 +159,7 @@ export default function UploadPage() {
     try {
       const res = await fetch(`${API_BASE}/api/process/start/${GAME_NAME}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "1" },
         body: JSON.stringify(config),
       });
 

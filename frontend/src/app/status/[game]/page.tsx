@@ -50,7 +50,7 @@ export default function StatusPage() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/process/status/${game}`);
+      const res = await fetch(`${API_BASE}/api/process/status/${game}`, { headers: { "ngrok-skip-browser-warning": "1" } });
       if (res.status === 404) {
         setStatus({ stage: "idle", message: "No pipeline started yet. Upload a video first.", progress: 0 });
         setError(null);
