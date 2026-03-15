@@ -95,33 +95,40 @@ export default function UploadPage() {
   const handleUpload = async () => {
     if (!file) return;
     setIsUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(0);
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB per chunk
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
     try {
-      const interval = setInterval(() => {
-        setUploadProgress((p) => (p >= 90 ? 90 : p + 10));
-      }, 500);
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const blob = file.slice(start, start + CHUNK_SIZE);
 
-      const res = await fetch(`${API_BASE}/api/upload/${GAME_NAME}`, {
-        method: "POST",
-        body: formData,
-      });
+        const formData = new FormData();
+        formData.append("file", blob, file.name);
+        formData.append("chunk_index", String(i));
+        formData.append("total_chunks", String(totalChunks));
+        formData.append("filename", file.name);
 
-      clearInterval(interval);
+        const res = await fetch(
+          `${API_BASE}/api/upload-chunk/${GAME_NAME}?chunk_index=${i}&total_chunks=${totalChunks}&filename=${encodeURIComponent(file.name)}`,
+          { method: "POST", body: formData }
+        );
 
-      if (res.ok) {
-        setUploadProgress(100);
-        setTimeout(() => {
-          setUploadDone(true);
+        if (!res.ok) {
+          alert("Upload failed at chunk " + i);
           setIsUploading(false);
-        }, 600);
-      } else {
-        alert("Upload failed. Check backend console.");
-        setIsUploading(false);
+          return;
+        }
+
+        setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
       }
+
+      setTimeout(() => {
+        setUploadDone(true);
+        setIsUploading(false);
+      }, 400);
     } catch {
       alert("Error connecting to backend API.");
       setIsUploading(false);

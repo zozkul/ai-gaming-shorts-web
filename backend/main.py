@@ -43,7 +43,6 @@ async def upload_video(game_name: str, file: UploadFile = File(...)):
 
     file_path = os.path.join(game_dir, file.filename)
 
-    # If the file already exists with the same name, skip re-uploading
     if os.path.exists(file_path):
         return {"status": "success", "filename": file.filename, "skipped": True}
 
@@ -51,10 +50,39 @@ async def upload_video(game_name: str, file: UploadFile = File(...)):
         with open(file_path, "wb") as buf:
             shutil.copyfileobj(file.file, buf)
 
-    # Run blocking file I/O in a thread pool so the event loop stays free
     await run_in_threadpool(_write)
-
     return {"status": "success", "filename": file.filename}
+
+
+@app.post("/api/upload-chunk/{game_name}")
+async def upload_chunk(
+    game_name: str,
+    file: UploadFile = File(...),
+    chunk_index: int = 0,
+    total_chunks: int = 1,
+    filename: str = "",
+):
+    """Chunked upload endpoint — receives one chunk at a time."""
+    game_dir = os.path.join(BASE_GAMES_DIR, game_name, "raw")
+    os.makedirs(game_dir, exist_ok=True)
+
+    tmp_path = os.path.join(game_dir, f"{filename}.part")
+    final_path = os.path.join(game_dir, filename)
+
+    data = await file.read()
+
+    def _append():
+        mode = "ab" if chunk_index > 0 else "wb"
+        with open(tmp_path, mode) as f:
+            f.write(data)
+
+    await run_in_threadpool(_append)
+
+    if chunk_index == total_chunks - 1:
+        os.replace(tmp_path, final_path)
+        return {"status": "success", "filename": filename, "done": True}
+
+    return {"status": "ok", "chunk": chunk_index, "done": False}
 
 # Connect the processing routes
 app.include_router(process_router)
