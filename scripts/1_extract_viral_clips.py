@@ -6,7 +6,6 @@ Analyzes long gameplay videos and extracts viral moments
 
 import os
 import sys
-import cv2
 import base64
 import json
 from openai import OpenAI
@@ -23,30 +22,40 @@ def get_video_duration(video_path):
     result = subprocess.run(cmd, capture_output=True, text=True)
     return float(result.stdout.strip())
 
-def extract_frames(video_path, num_frames=20):
-    """Extract frames from video for analysis"""
-    cap = cv2.VideoCapture(video_path)
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    duration = total_frames / fps
+def extract_frames(video_path, num_frames=10):
+    """Extract frames from video for analysis using FFmpeg (memory efficient)."""
+    import tempfile, shutil
 
-    # Extract frames evenly across the video
-    frame_indices = [int(total_frames * i / num_frames) for i in range(num_frames)]
+    # Get duration via ffprobe
+    probe = subprocess.run(
+        ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+         '-of', 'default=noprint_wrappers=1:nokey=1', video_path],
+        capture_output=True, text=True
+    )
+    duration = float(probe.stdout.strip())
 
     frames = []
     timestamps = []
+    tmpdir = tempfile.mkdtemp()
 
-    for idx in frame_indices:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-        ret, frame = cap.read()
-        if ret:
-            # Encode frame to base64
-            _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
-            b64_frame = base64.b64encode(buffer).decode('utf-8')
-            frames.append(b64_frame)
-            timestamps.append(idx / fps)
+    try:
+        # Extract frames one-by-one via FFmpeg (no large video buffer in RAM)
+        for i in range(num_frames):
+            ts = duration * i / num_frames
+            out_path = os.path.join(tmpdir, f"frame_{i}.jpg")
+            subprocess.run(
+                ['ffmpeg', '-y', '-ss', str(ts), '-i', video_path,
+                 '-vframes', '1', '-q:v', '6', '-vf', 'scale=640:-1', out_path],
+                capture_output=True
+            )
+            if os.path.exists(out_path):
+                with open(out_path, 'rb') as f:
+                    b64_frame = base64.b64encode(f.read()).decode('utf-8')
+                frames.append(b64_frame)
+                timestamps.append(ts)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
-    cap.release()
     return frames, timestamps, duration
 
 def analyze_for_viral_moments(video_path, game_name, max_clips=5):
@@ -149,8 +158,8 @@ def extract_clip(video_path, start_time, end_time, output_path):
         '-i', video_path,
         '-t', str(end_time - start_time),
         '-c:v', 'libx264',
-        '-preset', 'medium',
-        '-crf', '18',
+        '-preset', 'ultrafast',
+        '-crf', '26',
         '-pix_fmt', 'yuv420p',
         '-c:a', 'aac',
         '-b:a', '192k',
