@@ -51,6 +51,12 @@ export default function StatusPage() {
   const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/process/status/${game}`);
+      if (res.status === 404) {
+        setStatus({ stage: "idle", message: "No pipeline started yet. Upload a video first.", progress: 0 });
+        setError(null);
+        setLoading(false);
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: StatusData = await res.json();
       setStatus(data);
