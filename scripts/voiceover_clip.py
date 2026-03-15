@@ -54,13 +54,27 @@ def get_word_timestamps(audio_path, language=None):
     return t.words or []
 
 import platform as _platform
-if _platform.system() == "Windows":
-    # Single quotes prevent : from being parsed as option separator
-    IMPACT_FONT = "fontfile='C:/Windows/Fonts/Impact.ttf'"
-    UNICODE_FONT = "fontfile='C:/Windows/Fonts/Arial.ttf'"
-else:
-    IMPACT_FONT = "fontfile=/System/Library/Fonts/Supplemental/Impact.ttf"
-    UNICODE_FONT = "fontfile=/System/Library/Fonts/Supplemental/Arial Unicode.ttf"
+import shutil as _shutil
+
+def _setup_fonts():
+    """Copy fonts to a relative path so FFmpeg drawtext avoids Windows drive-letter colons."""
+    if _platform.system() != "Windows":
+        return (
+            "fontfile=/System/Library/Fonts/Supplemental/Impact.ttf",
+            "fontfile=/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+        )
+    # Relative path has no colon — FFmpeg resolves from its CWD (same as uvicorn's CWD)
+    fonts_dir = "fonts"
+    os.makedirs(fonts_dir, exist_ok=True)
+    impact_dst = os.path.join(fonts_dir, "Impact.ttf")
+    arial_dst  = os.path.join(fonts_dir, "Arial.ttf")
+    if not os.path.exists(impact_dst):
+        _shutil.copy2("C:/Windows/Fonts/Impact.ttf", impact_dst)
+    if not os.path.exists(arial_dst):
+        _shutil.copy2("C:/Windows/Fonts/Arial.ttf", arial_dst)
+    return "fontfile=fonts/Impact.ttf", "fontfile=fonts/Arial.ttf"
+
+IMPACT_FONT, UNICODE_FONT = _setup_fonts()
 
 def _ffmpeg_safe(text):
     """Escape characters unsafe for FFmpeg drawtext while preserving Unicode (Turkish etc.)"""
